@@ -17,7 +17,6 @@ interface OnboardingScreenProps {
   currentStep: number;
   totalSteps: number;
   onNext: () => void;
-  onSkip?: () => void;
   isLastStep?: boolean;
 }
 
@@ -28,7 +27,6 @@ export default function OnboardingScreen({
   currentStep,
   totalSteps,
   onNext,
-  onSkip,
   isLastStep = false,
 }: OnboardingScreenProps) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -152,14 +150,8 @@ export default function OnboardingScreen({
         <LinearGradient colors={['#a172f5', 'rgba(161,114,245,0.15)']} style={styles.blobGradient} />
       </Animated.View>
 
-      {/* Skip Button */}
-      {onSkip && (
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onSkip} style={styles.skipButton} accessibilityRole="button" accessibilityLabel="Skip onboarding">
-            <Text style={styles.skipText}>Skip</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* Header reserved space (skip removed) */}
+      <View style={styles.header} />
 
       {/* Main Content */}
       <Animated.View 
@@ -218,15 +210,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 16,
   },
-  skipButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  skipText: {
-    color: '#7b3fe4',
-    fontSize: 16,
-    fontWeight: '500',
-  },
+  // skip removed
   mainContent: {
     flex: 1,
     justifyContent: 'center',

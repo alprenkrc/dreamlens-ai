@@ -4,7 +4,6 @@ import OnboardingScreen from './OnboardingScreen';
 
 interface OnboardingFlowProps {
   onComplete: () => void;
-  onSkip: () => void;
 }
 
 const onboardingData = [
@@ -25,7 +24,7 @@ const onboardingData = [
   },
 ];
 
-export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
+export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = useState(0);
 
   const handleNext = useCallback(() => {
@@ -35,10 +34,6 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
     }
     onComplete();
   }, [currentStep, onComplete]);
-
-  const handleSkip = useCallback(() => {
-    onSkip();
-  }, [onSkip]);
 
   const currentData = useMemo(() => onboardingData[currentStep], [currentStep]);
   const isLastStep = useMemo(() => currentStep === onboardingData.length - 1, [currentStep]);
@@ -52,7 +47,6 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
         currentStep={currentStep}
         totalSteps={onboardingData.length}
         onNext={handleNext}
-        onSkip={handleSkip}
         isLastStep={isLastStep}
       />
     </View>

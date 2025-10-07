@@ -26,9 +26,9 @@ export default function RootLayout() {
     if (authState === 'authenticated') {
       // Existing user with proper account - go directly to main app
       router.replace('/(tabs)');
-    } else if (authState === 'guest' && !hasRecordedFirstDream) {
+ //   } else if (authState === 'guest' && !hasRecordedFirstDream) {
       // Anonymous user (guest) hasn't recorded first dream yet
-      router.replace('/record');
+   //   router.replace('/record');
     } else if (authState === 'unauthenticated') {
       // New user - show account choice screen
       router.replace('/account-choice');
@@ -49,8 +49,19 @@ export default function RootLayout() {
     return (
       <>
         <OnboardingFlow
-          onComplete={completeOnboarding}
-          onSkip={completeOnboarding}
+          onComplete={async () => {
+            await completeOnboarding();
+            // Navigate according to current auth state after marking complete
+            if (authState === 'authenticated') {
+              router.replace('/(tabs)');
+              return;
+            }
+            if (authState === 'guest' && !hasRecordedFirstDream) {
+              router.replace('/record');
+              return;
+            }
+            router.replace('/account-choice');
+          }}
         />
         <StatusBar style="auto" />
       </>
@@ -66,7 +77,6 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="dream-detail" />
-        <Stack.Screen name="welcome" />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

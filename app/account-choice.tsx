@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { User, Sparkles, ArrowRight, LogIn } from 'lucide-react-native';
+import { Image } from 'expo-image';
 import { useAuth } from '@/hooks/useAuth';
 import Animated, { 
   useSharedValue, 
@@ -56,12 +57,12 @@ export default function AccountChoiceScreen() {
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.iconContainer}>
-              <LinearGradient
-                colors={['#A78BFA', '#C084FC']}
-                style={styles.iconGradient}
-              >
-                <User size={32} color="#FFFFFF" />
-              </LinearGradient>
+              <Image
+                source={require('../assets/images/dreamlens-ai-icon.png')}
+                style={styles.appIcon}
+                contentFit="contain"
+                accessibilityLabel="DreamLens app icon"
+              />
             </View>
             
             <Text style={styles.title}>Welcome to DreamLens!</Text>
@@ -185,6 +186,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
+  },
+  appIcon: {
+    width: 96,
+    height: 96,
+    borderRadius: 20,
+    shadowColor: '#A78BFA',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
   },
   title: {
     fontSize: 28,

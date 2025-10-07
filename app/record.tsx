@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert, ActivityIndicator, BackHandler } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Mic, MicOff, Type, Sparkles, Send, Moon, ArrowLeft } from 'lucide-react-native';
@@ -49,6 +49,23 @@ export default function RecordScreen() {
     },
     language: 'tr',
   });
+
+  // Handle Android hardware back button for anonymous first-time users
+  useEffect(() => {
+    function onHardwareBackPress() {
+      if (isGenerating) {
+        return true; // Block back during loading
+      }
+      if (isGuest && !hasRecordedFirstDream) {
+        router.replace('/account-choice');
+        return true; // prevent default back navigation (we navigate manually)
+      }
+      return false; // allow default behavior
+    }
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBackPress);
+    return () => subscription.remove();
+  }, [isGuest, hasRecordedFirstDream, isGenerating]);
 
   const toggleRecording = async () => {
     if (!isRecording) {
@@ -121,19 +138,14 @@ export default function RecordScreen() {
       // Handle navigation based on user type
       const wasFirstDream = isGuest && !hasRecordedFirstDream;
       
-      // Mark first dream as recorded for guest users (but don't wait for state update)
+      // Mark first dream as recorded immediately to avoid root guard redirecting back to record
       if (wasFirstDream) {
-        // Use setTimeout to prevent immediate state update race condition
-        setTimeout(() => {
-          markFirstDreamRecorded();
-        }, 1000);
+        await markFirstDreamRecorded();
       }
 
-      // Navigate directly to dream detail without alert
+      // Navigate to dream detail; keep loading overlay until this screen unmounts
       setAnalysisStep('Complete! Opening your dream...');
-      setTimeout(() => {
-        router.replace(`/dream-detail?dreamId=${dreamId}`);
-      }, 500); // Small delay to show completion message
+      router.replace(`/dream-detail?dreamId=${dreamId}`);
     } catch (error: any) {
       setIsGenerating(false);
       setAnalysisStep('');
@@ -143,9 +155,12 @@ export default function RecordScreen() {
   };
 
   const handleBack = () => {
+    if (isGenerating) {
+      return; // Ignore back while loading
+    }
     if (isGuest && !hasRecordedFirstDream) {
-      // First-time guest user can't go back
-      Alert.alert('Complete Your First Dream', 'Please record your first dream to continue.');
+      // Send first-time guest back to account choice
+      router.replace('/account-choice');
       return;
     }
     router.back();
@@ -156,31 +171,8 @@ export default function RecordScreen() {
       colors={['#1E1B4B', '#3730A3', '#6366F1']}
       style={styles.container}
     >
-      {/* Loading Overlay */}
-      {isGenerating && (
-        <View style={styles.loadingOverlay}>
-          <LinearGradient
-            colors={['rgba(30, 27, 75, 0.95)', 'rgba(55, 48, 163, 0.95)', 'rgba(99, 102, 241, 0.95)']}
-            style={styles.loadingGradient}
-          >
-            <View style={styles.loadingContent}>
-              <ActivityIndicator size="large" color="#A78BFA" />
-              <Text style={styles.loadingTitle}>Creating Your Dream Analysis</Text>
-              <Text style={styles.loadingStep}>{analysisStep}</Text>
-              <View style={styles.loadingDots}>
-                <View style={[styles.dot, styles.dotActive]} />
-                <View style={[styles.dot, analysisStep.includes('visualization') && styles.dotActive]} />
-                <View style={[styles.dot, analysisStep.includes('Saving') && styles.dotActive]} />
-              </View>
-            </View>
-          </LinearGradient>
-        </View>
-      )}
-
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        scrollEnabled={!isGenerating}
-        pointerEvents={isGenerating ? 'none' : 'auto'}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -419,9 +411,9 @@ export default function RecordScreen() {
             colors={['#8B5CF6', '#A78BFA']}
             style={styles.submitGradient}
           >
-            {isGenerating ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
+          {isGenerating ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
               <>
                 <Sparkles size={20} color="#FFFFFF" />
                 <Text style={styles.submitText}>Analyze Dream</Text>
@@ -433,10 +425,31 @@ export default function RecordScreen() {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {isGenerating ? (
+        <View style={styles.loadingOverlay} pointerEvents="auto">
+          <LinearGradient
+            colors={['rgba(30,27,75,0.95)', 'rgba(55,48,163,0.95)']}
+            style={styles.loadingGradient}
+          >
+            <View style={styles.loadingContent}>
+              <ActivityIndicator size="large" color="#FFFFFF" />
+              <Text style={styles.loadingTitle}>Analyzing your dream</Text>
+              <Text style={styles.loadingStep}>{analysisStep}</Text>
+              <View style={styles.loadingDots}>
+                <View style={[styles.dot, styles.dotActive]} />
+                <View style={styles.dot} />
+                <View style={styles.dot} />
+              </View>
+            </View>
+          </LinearGradient>
+        </View>
+      ) : null}
     </LinearGradient>
   );
 }
 
+// Full-screen loading overlay renders while isGenerating is true
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -35,7 +35,7 @@ export default function SettingsScreen() {
           style: 'destructive',
           onPress: async () => {
             await logout();
-            router.replace('/welcome');
+            router.replace('/account-choice');
           }
         },
       ]

@@ -10,13 +10,13 @@ import { deleteDream } from '@/services/dreams';
 
 export default function DreamDetail() {
   const { dreamId } = useLocalSearchParams<{ dreamId: string }>();
-  const { isGuest, hasRecordedFirstDream } = useAuth();
+  const { authState, isGuest, hasRecordedFirstDream } = useAuth();
   const [dream, setDream] = useState<Dream | null>(null);
   const [loading, setLoading] = useState(true);
 
 
   // Check if this is a first-time guest user viewing their first dream
-  const isFirstDreamForGuest = isGuest && hasRecordedFirstDream;
+  const isFirstDreamForGuest = authState === 'guest' && hasRecordedFirstDream;
 
   useEffect(() => {
     loadDream();
