@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 const { width } = Dimensions.get('window');
 const imageWidth = (width - 60) / 2;
 
-import { listDreams } from '@/services/dreams';
+import { listDreams, migratePlaceholderDreams } from '@/services/dreams';
 import { auth } from '@/config/firebase';
 import { Dream } from '@/types/dream';
 
@@ -22,8 +22,26 @@ export default function GalleryScreen() {
     setRefreshing(true);
     try {
       const uid = auth.currentUser?.uid ?? null;
+      
+      // Migrate placeholder dreams if user is authenticated (run in background)
+      if (uid) {
+        migratePlaceholderDreams(uid).catch(error => {
+          console.warn('Migration failed, but continuing with app:', error);
+        });
+      }
+      
       const items = await listDreams(uid);
       setDreamImages(items);
+      
+      // Debug filtered images
+      const filtered = selectedFilter === 'all' 
+        ? items 
+        : items.filter(dream => 
+            dream.symbols?.some(symbol => symbol.toLowerCase() === selectedFilter) || 
+            dream.emotions?.some(emotion => emotion.toLowerCase() === selectedFilter)
+          );
+    } catch (error) {
+      console.error('Gallery: Error loading dreams:', error);
     } finally {
       setRefreshing(false);
     }
@@ -110,7 +128,6 @@ export default function GalleryScreen() {
 
   const toggleLike = (imageId: string) => {
     // In real app, update the like status
-    console.log('Toggle like for image:', imageId);
   };
 
   return (

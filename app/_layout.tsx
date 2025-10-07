@@ -52,7 +52,7 @@ export default function RootLayout() {
           onComplete={completeOnboarding}
           onSkip={completeOnboarding}
         />
-        <StatusBar style="light" />
+        <StatusBar style="auto" />
       </>
     );
   }

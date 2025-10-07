@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Edit, Trash2, Home, BookOpen, BarChart3, User, X } from 'lucide-react-native';
 import { Dream } from '@/types/dream';
+import { DreamVideoGenerator } from './DreamVideoGenerator';
 
 const { width } = Dimensions.get('window');
 
@@ -38,6 +39,20 @@ export default function DreamDetailScreen({
   onContinue,
 }: DreamDetailScreenProps) {
   const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [currentDream, setCurrentDream] = useState(dream);
+
+  // Update currentDream when dream prop changes
+  React.useEffect(() => {
+    setCurrentDream(dream);
+  }, [dream]);
+
+  const handleVideoGenerated = (videoUrl: string) => {
+    setCurrentDream(prev => ({
+      ...prev,
+      videoUrl: videoUrl
+    }));
+  };
+
   const formatDate = (dateString: string): string => {
     try {
       const date = new Date(dateString);
@@ -134,18 +149,26 @@ export default function DreamDetailScreen({
             <View style={styles.section}>
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Title</Text>
-                <Text style={styles.infoValue}>{dream.title}</Text>
+                <Text style={styles.infoValue}>{currentDream.title}</Text>
               </View>
               
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Date</Text>
-                <Text style={styles.infoValue}>{formatDate(dream.date)}</Text>
+                <Text style={styles.infoValue}>{formatDate(currentDream.date)}</Text>
               </View>
               
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Dream Description</Text>
-                <Text style={styles.description}>{dream.description}</Text>
+                <Text style={styles.description}>{currentDream.description}</Text>
               </View>
+              
+              {/* Original Dream Text */}
+              {currentDream.originalDreamText && currentDream.originalDreamText !== currentDream.description && (
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoLabel}>Original Dream Text</Text>
+                  <Text style={styles.originalText}>{currentDream.originalDreamText}</Text>
+                </View>
+              )}
             </View>
 
             {/* AI Visuals */}
@@ -157,11 +180,27 @@ export default function DreamDetailScreen({
                 activeOpacity={0.8}
               >
                 <Image 
-                  source={{ uri: dream.imageUrl }} 
+                  source={{ uri: currentDream.imageUrl }} 
                   style={styles.dreamImage}
                   resizeMode="contain"
                 />
               </TouchableOpacity>
+            </View>
+
+            {/* Dream Video Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Dream Video</Text>
+              <View style={styles.noVideoSection}>
+                <Text style={styles.noVideoText}>
+                  Convert your dream into a magical video
+                </Text>
+                <DreamVideoGenerator
+                  dreamId={currentDream.id}
+                  dreamTitle={currentDream.title}
+                  dreamDescription={currentDream.description}
+                  onVideoGenerated={handleVideoGenerated}
+                />
+              </View>
             </View>
 
             {/* AI Analysis */}
@@ -170,17 +209,17 @@ export default function DreamDetailScreen({
               <View style={styles.analysisContainer}>
                 <View style={styles.analysisRow}>
                   <Text style={styles.analysisLabel}>Symbols:</Text>
-                  <Text style={styles.analysisValue}>{dream.symbols.join(', ')}</Text>
+                  <Text style={styles.analysisValue}>{currentDream.symbols.join(', ')}</Text>
                 </View>
                 
                 <View style={styles.analysisRow}>
                   <Text style={styles.analysisLabel}>Emotions:</Text>
-                  <Text style={styles.analysisValue}>{dream.emotions.join(', ')}</Text>
+                  <Text style={styles.analysisValue}>{currentDream.emotions.join(', ')}</Text>
                 </View>
                 
                 <View style={styles.analysisRow}>
                   <Text style={styles.analysisLabel}>Fortune:</Text>
-                  <Text style={styles.analysisValue}>{dream.fortune}</Text>
+                  <Text style={styles.analysisValue}>{currentDream.fortune}</Text>
                 </View>
               </View>
             </View>
@@ -268,7 +307,7 @@ export default function DreamDetailScreen({
             <X size={30} color="#FFFFFF" />
           </TouchableOpacity>
           <Image 
-            source={{ uri: dream.imageUrl }} 
+            source={{ uri: currentDream.imageUrl }} 
             style={styles.modalImage}
             resizeMode="contain"
           />
@@ -337,6 +376,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.8)',
     lineHeight: 24,
+  },
+  originalText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.6)',
+    lineHeight: 20,
+    fontStyle: 'italic',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#8B5CF6',
   },
   sectionTitle: {
     fontSize: 18,
@@ -480,5 +530,37 @@ const styles = StyleSheet.create({
     width: width * 0.95,
     height: width * 0.95,
     maxHeight: '80%',
+  },
+  videoSection: {
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.3)',
+    marginTop: 8,
+  },
+  videoInfo: {
+    color: '#8B5CF6',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  noVideoSection: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderStyle: 'dashed',
+    marginTop: 8,
+  },
+  noVideoText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 20,
   },
 });

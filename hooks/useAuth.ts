@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '@/config/firebase';
+import { ensureUserDoc, UserProfile } from '@/services/user';
 
 export type AuthState = 'loading' | 'guest' | 'authenticated' | 'unauthenticated';
 
@@ -27,7 +28,7 @@ export function useAuth() {
     loadInitialState();
     
     // Listen to Firebase auth state changes
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         if (user.isAnonymous) {
           setAuthStateInternal('guest');
@@ -35,6 +36,14 @@ export function useAuth() {
         } else {
           setAuthStateInternal('authenticated');
           setIsGuest(false);
+          try {
+            const userData: Partial<UserProfile> = {};
+            if (user.displayName) userData.name = user.displayName;
+            if (user.email) userData.email = user.email;
+            await ensureUserDoc(user.uid, userData);
+          } catch (e) {
+            console.error('ensureUserDoc failed', e);
+          }
         }
       } else {
         setAuthStateInternal('unauthenticated');

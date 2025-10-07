@@ -105,17 +105,12 @@ export function useAudioRecording(options: UseAudioRecordingOptions = {}): UseAu
       setRecordingDuration(0);
 
       // Prepare and start recording
-      console.log('Preparing to record...');
       await recorder.prepareToRecordAsync();
-      console.log('Starting recording...');
       recorder.record();
 
       // Start timer
       recordingTimerRef.current = setInterval(() => {
-        setRecordingDuration(prev => {
-          console.log('Recording duration:', prev + 1);
-          return prev + 1;
-        });
+        setRecordingDuration(prev => prev + 1);
       }, 1000);
 
     } catch (error: any) {
@@ -141,8 +136,6 @@ export function useAudioRecording(options: UseAudioRecordingOptions = {}): UseAu
       
       // Get the recording URI
       const uri = recorder.uri;
-      console.log('Recording stopped. URI:', uri);
-      console.log('Recording duration:', recordingDuration, 'seconds');
       
       if (!uri) {
         console.warn('No recording URI found!');

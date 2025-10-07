@@ -45,7 +45,7 @@ export default function DreamJournalScreen() {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   useEffect(() => {
     loadDreams();
@@ -70,8 +70,11 @@ export default function DreamJournalScreen() {
     const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
+
+    // Align the grid to start on Monday. Convert JS getDay() (Sun=0..Sat=6) to Mon-based index (Mon=0..Sun=6)
+    const firstWeekdayMonday = (firstDay.getDay() + 6) % 7;
     const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    startDate.setDate(startDate.getDate() - firstWeekdayMonday);
 
     const days: CalendarDay[] = [];
     const today = new Date();
@@ -139,15 +142,19 @@ export default function DreamJournalScreen() {
     };
   };
 
-  const getSelectedDateDream = () => {
-    return dreams.find(dream => {
+  function isSameLocalDay(a: Date, b: Date) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
+  const getSelectedDateDreams = () => {
+    return dreams.filter(dream => {
       const dreamDate = new Date(dream.date);
-      return dreamDate.toDateString() === selectedDate.toDateString();
+      return isSameLocalDay(dreamDate, selectedDate);
     });
   };
 
   const stats = getMonthStats();
-  const selectedDream = getSelectedDateDream();
+  const selectedDreams = getSelectedDateDreams();
 
   return (
     <LinearGradient
@@ -249,32 +256,34 @@ export default function DreamJournalScreen() {
             </BlurView>
           </View>
 
-          {/* Selected Date Dream Entry */}
-          {selectedDream ? (
+          {/* Selected Date Dream Entries */}
+          {selectedDreams.length > 0 ? (
             <View style={styles.dreamEntryContainer}>
               <Text style={styles.sectionTitle}>
-                Dream Entry: {selectedDate.toLocaleDateString('en-US', { 
+                {selectedDreams.length} dream{selectedDreams.length > 1 ? 's' : ''} on {selectedDate.toLocaleDateString('en-US', { 
                   month: 'short', 
                   day: 'numeric' 
                 })}
               </Text>
-              <BlurView intensity={20} style={styles.dreamEntryCard}>
-                <View style={styles.dreamEntryContent}>
-                  <Text style={styles.dreamTitle}>{selectedDream.title}</Text>
-                  <Text style={styles.dreamDescription} numberOfLines={3}>
-                    {selectedDream.description}
-                  </Text>
-                  <TouchableOpacity 
-                    style={styles.readMoreButton}
-                    onPress={() => router.push({
-                      pathname: '/dream-detail',
-                      params: { dreamId: selectedDream.id }
-                    })}
-                  >
-                    <Text style={styles.readMoreText}>Read more</Text>
-                  </TouchableOpacity>
-                </View>
-              </BlurView>
+              {selectedDreams.map((dream) => (
+                <BlurView key={dream.id} intensity={20} style={[styles.dreamEntryCard, { marginBottom: 12 }] }>
+                  <View style={styles.dreamEntryContent}>
+                    <Text style={styles.dreamTitle}>{dream.title}</Text>
+                    <Text style={styles.dreamDescription} numberOfLines={3}>
+                      {dream.description}
+                    </Text>
+                    <TouchableOpacity 
+                      style={styles.readMoreButton}
+                      onPress={() => router.push({
+                        pathname: '/dream-detail',
+                        params: { dreamId: dream.id }
+                      })}
+                    >
+                      <Text style={styles.readMoreText}>Read more</Text>
+                    </TouchableOpacity>
+                  </View>
+                </BlurView>
+              ))}
             </View>
           ) : (
             <View style={styles.noDreamContainer}>
@@ -318,8 +327,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 25,
-    paddingBottom: 15,
+    paddingTop: 60,
+    paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
@@ -378,7 +387,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   calendarDay: {
-    width: `${100/7}%`,
+    flexBasis: '14.2857%',
+    maxWidth: '14.2857%',
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',

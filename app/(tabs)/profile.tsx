@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import { useAuth } from '@/hooks/useAuth';
+import { usePremium } from '@/hooks/usePremium';
 import { listDreams } from '@/services/dreams';
 import { Dream } from '@/types/dream';
 import { 
@@ -23,6 +24,7 @@ import {
 export default function ProfileScreen() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
+  const { isPremium } = usePremium();
 
   const [userStats, setUserStats] = useState({
     name: 'Dream Explorer',
@@ -248,6 +250,12 @@ export default function ProfileScreen() {
           </View>
           
           <Text style={styles.userName}>{userStats.name}</Text>
+          {isPremium && (
+            <View style={styles.premiumBadgeRow}>
+              <Crown size={14} color="#FBBF24" />
+              <Text style={styles.premiumBadgeText}>Premium Member</Text>
+            </View>
+          )}
           <Text style={styles.userLevel}>{userStats.level}</Text>
           <Text style={styles.memberSince}>Member since {userStats.memberSince}</Text>
         </View>
@@ -268,22 +276,39 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Premium Upgrade */}
-        <TouchableOpacity style={styles.premiumCard} onPress={showUpgradeDialog}>
-          <BlurView intensity={30} style={styles.premiumBlur}>
-            <LinearGradient
-              colors={['rgba(251, 191, 36, 0.2)', 'rgba(245, 101, 101, 0.2)']}
-              style={styles.premiumGradient}
-            >
-              <Crown size={24} color="#FBBF24" />
-              <View style={styles.premiumText}>
-                <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
-                <Text style={styles.premiumSubtitle}>Unlock unlimited features</Text>
-              </View>
-              <ChevronRight size={20} color="#FBBF24" />
-            </LinearGradient>
-          </BlurView>
-        </TouchableOpacity>
+        {/* Premium Card */}
+        {isPremium ? (
+          <View style={styles.premiumCard}>
+            <BlurView intensity={30} style={styles.premiumBlur}>
+              <LinearGradient
+                colors={['rgba(16, 185, 129, 0.2)', 'rgba(59, 130, 246, 0.2)']}
+                style={styles.premiumGradient}
+              >
+                <Crown size={24} color="#FBBF24" />
+                <View style={styles.premiumText}>
+                  <Text style={styles.premiumTitle}>You are Premium</Text>
+                  <Text style={styles.premiumSubtitle}>Thanks for supporting Dreamlens</Text>
+                </View>
+              </LinearGradient>
+            </BlurView>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.premiumCard} onPress={() => router.push('/paywall')}>
+            <BlurView intensity={30} style={styles.premiumBlur}>
+              <LinearGradient
+                colors={['rgba(251, 191, 36, 0.2)', 'rgba(245, 101, 101, 0.2)']}
+                style={styles.premiumGradient}
+              >
+                <Crown size={24} color="#FBBF24" />
+                <View style={styles.premiumText}>
+                  <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
+                  <Text style={styles.premiumSubtitle}>Unlock unlimited features</Text>
+                </View>
+                <ChevronRight size={20} color="#FBBF24" />
+              </LinearGradient>
+            </BlurView>
+          </TouchableOpacity>
+        )}
 
         {/* Achievements */}
         <View style={styles.achievementsContainer}>
@@ -405,6 +430,17 @@ const styles = StyleSheet.create({
   memberSince: {
     fontSize: 14,
     color: '#9CA3AF',
+  },
+  premiumBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+  },
+  premiumBadgeText: {
+    color: '#FBBF24',
+    fontWeight: '700',
+    fontSize: 12,
   },
   statsContainer: {
     paddingHorizontal: 20,

@@ -89,18 +89,20 @@ export default function RecordScreen() {
       setAnalysisStep('Analyzing your dream with AI...');
       const analysis = await analyzeDreamWithLLM({
         dreamDescription: dreamText,
-        model: 'google/gemini-2.5-flash', // Fast and free model
-        temperature: 0.7,
+        model: 'openai/gpt-5-chat', // Advanced model for better dream interpretation
+        temperature: 0.3, // Lower temperature for more consistent results
       });
 
-      // Step 2: Generate dream image based on improved description or original
+      // Step 2: Generate dream image based on AI-generated visual prompt or improved description
       setAnalysisStep('Creating dream visualization...');
-      const imagePrompt = analysis.improvedDescription || dreamText;
+      const imagePrompt = analysis.visualPrompt || analysis.improvedDescription || dreamText;
       const result = await generateDreamImage({
-        prompt: `Dream visualization: ${imagePrompt}. Surreal, cinematic, high-detail visual with mystical lighting, ethereal color palette, dreamlike atmosphere, fantasy art style.`,
-        aspectRatio: '1:1', // Square image for dream cards
-        guidance: 8, // Higher guidance for better prompt adherence
-        negativePrompt: 'ugly, blurry, low quality, distorted, text, watermark',
+        prompt: analysis.visualPrompt 
+          ? `${analysis.visualPrompt}, dreamlike surreal art style, ethereal atmosphere, soft mystical lighting, high detail, cinematic composition`
+          : `Dream visualization: ${imagePrompt}, surreal dreamlike art style, ethereal mystical atmosphere, soft lighting, high detail, cinematic composition`,
+        imageSize: 'square', // Square image for dream cards
+        guidanceScale: 4.0, // Higher guidance for more accurate prompt following
+        numInferenceSteps: 35, // More steps for better quality
       });
 
       // Step 3: Save dream with analysis
@@ -108,6 +110,7 @@ export default function RecordScreen() {
       const dreamId = await addDream(auth.currentUser?.uid ?? null, {
         title: analysis.title,
         description: analysis.improvedDescription || dreamText,
+        originalDreamText: dreamText, // Save original user input
         imageUrl: result.imageUrl,
         vividness: vividnessRating,
         symbols: analysis.symbols,

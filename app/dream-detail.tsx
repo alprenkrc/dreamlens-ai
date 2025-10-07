@@ -14,6 +14,7 @@ export default function DreamDetail() {
   const [dream, setDream] = useState<Dream | null>(null);
   const [loading, setLoading] = useState(true);
 
+
   // Check if this is a first-time guest user viewing their first dream
   const isFirstDreamForGuest = isGuest && hasRecordedFirstDream;
 
@@ -25,15 +26,14 @@ export default function DreamDetail() {
     if (!dreamId) {
       console.error('No dreamId provided');
       setLoading(false);
-      // Instead of going back, show an error state or redirect to gallery
+      // Show error message and redirect to home
       setTimeout(() => {
-        router.replace('/(tabs)/gallery');
+        router.replace('/(tabs)');
       }, 1000);
       return;
     }
 
     try {
-      console.log('Loading dream with ID:', dreamId);
       const dreamDoc = await getDoc(doc(db, 'dreams', dreamId));
       
       if (!dreamDoc.exists()) {
@@ -46,13 +46,13 @@ export default function DreamDetail() {
       }
 
       const data = dreamDoc.data();
-      console.log('Dream data loaded:', data);
       
       const loadedDream: Dream = {
         id: dreamDoc.id,
         title: data.title ?? '',
         date: data.createdAt?.toDate?.().toISOString?.() ?? new Date().toISOString(),
         description: data.description ?? '',
+        originalDreamText: data.originalDreamText ?? '',
         imageUrl: data.imageUrl ?? '',
         symbols: data.symbols ?? [],
         emotions: data.emotions ?? [],

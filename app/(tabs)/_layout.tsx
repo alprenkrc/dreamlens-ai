@@ -13,7 +13,7 @@ export default function TabLayout() {
         tabBarInactiveTintColor: '#6B7280',
         tabBarBackground: () => (
           <LinearGradient
-            colors={['rgba(17, 24, 39, 0.95)', 'rgba(75, 85, 99, 0.95)']}
+            colors={['rgba(17, 24, 39, 0.95)', 'rgba(0, 0, 0, 0.95)']}
             style={StyleSheet.absoluteFillObject}
           />
         ),

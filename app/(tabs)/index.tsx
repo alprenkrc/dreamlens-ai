@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Moon, Star, Zap, TrendingUp, Crown, Heart, BookOpen, Calendar, Eye } from 'lucide-react-native';
 import { router } from 'expo-router';
+import { usePremium } from '@/hooks/usePremium';
 import { listDreams } from '@/services/dreams';
 import { Dream } from '@/types/dream';
 import { auth } from '@/config/firebase';
@@ -20,6 +21,7 @@ export default function HomeScreen() {
     currentStreak: 0,
     averageVividness: 0
   });
+  const { isPremium } = usePremium();
 
   const getTimeBasedGreeting = (): string => {
     const hour = new Date().getHours();
@@ -137,7 +139,7 @@ export default function HomeScreen() {
     title: dream.title,
     date: formatDate(dream.date),
     vividness: dream.vividness || 0
-  }));
+  })).filter(dream => dream.id); // Filter out dreams without ID
 
   return (
     <LinearGradient
@@ -223,12 +225,16 @@ export default function HomeScreen() {
             <TouchableOpacity 
               key={dream.id} 
               style={styles.dreamCard}
-              onPress={() => router.push('/dream-detail')}
+              onPress={() => {
+                router.push({ pathname: '/dream-detail', params: { dreamId: dream.id } });
+              }}
             >
               <BlurView intensity={30} style={styles.dreamCardBlur}>
                 <View style={styles.dreamCardContent}>
-                  <View>
-                    <Text style={styles.dreamTitle}>{dream.title}</Text>
+                  <View style={styles.dreamInfoContainer}>
+                    <Text style={styles.dreamTitle} numberOfLines={1} ellipsizeMode="tail">
+                      {dream.title}
+                    </Text>
                     <Text style={styles.dreamDate}>{dream.date}</Text>
                   </View>
                   <View style={styles.vividnessContainer}>
@@ -243,17 +249,22 @@ export default function HomeScreen() {
         </View>
 
         {/* Premium Upgrade */}
-        <TouchableOpacity style={styles.premiumCard}>
-          <LinearGradient
-            colors={['rgba(251, 191, 36, 0.2)', 'rgba(245, 101, 101, 0.2)']}
-            style={styles.premiumGradient}
+        {!isPremium && (
+          <TouchableOpacity 
+            style={styles.premiumCard}
+            onPress={() => router.push('/paywall')}
           >
-            <Crown size={24} color="#FBBF24" />
-            <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
-            <Text style={styles.premiumSubtitle}>Unlimited dreams • AI Counselor • HD Visuals</Text>
-            <Text style={styles.premiumPrice}>$4.99/month</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+            <LinearGradient
+              colors={['rgba(251, 191, 36, 0.2)', 'rgba(245, 101, 101, 0.2)']}
+              style={styles.premiumGradient}
+            >
+              <Crown size={24} color="#FBBF24" />
+              <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
+              <Text style={styles.premiumSubtitle}>Unlimited dreams • AI Counselor • HD Visuals</Text>
+              <Text style={styles.premiumPrice}>$4.99/month</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.bottomPadding} />
       </ScrollView>
@@ -365,6 +376,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
   },
+  dreamInfoContainer: {
+    flex: 1,
+    marginRight: 12,
+  },
   dreamTitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -377,6 +392,7 @@ const styles = StyleSheet.create({
   },
   vividnessContainer: {
     alignItems: 'center',
+    minWidth: 80,
   },
   vividnessScore: {
     fontSize: 18,
